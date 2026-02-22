@@ -19,12 +19,13 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private  final CustomUerDetailsService customUerDetailsService;
+    private final CustomUerDetailsService customUerDetailsService;
     private final JwtUtils jwtUtils;
+
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
-    ) throws ServletException, IOException {
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         String username = null;
         String jwt = null;
@@ -33,12 +34,11 @@ public class JwtFilter extends OncePerRequestFilter {
             username = jwtUtils.extractUsername(jwt);
         }
 
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = customUerDetailsService.loadUserByUsername(username);
             if (jwtUtils.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
+                        userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails((new WebAuthenticationDetailsSource().buildDetails(request)));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
@@ -46,12 +46,10 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/**");
+        return path.startsWith("/api/**");
     }
 
 }
