@@ -16,6 +16,7 @@ public class EmailVerificationToken {
     Long id;
     private String token;
     private Date expirationDate;
+    private String type;
     private boolean used;
     @OneToOne
     @JoinColumn(name = "user_id")

@@ -18,20 +18,17 @@ public class CustomUerDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username);
 
         if (user == null) {
-            throw new UsernameNotFoundException("Aucun utilisateur trouvé avec l'email : " + email);
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new UsernameNotFoundException("Compte non vérifié. Veuillez vérifier votre email.");
+            throw new UsernameNotFoundException("Aucun utilisateur trouvé avec le pseudo " + username);
         }
 
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
+                user.getUsername(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority(user.getRole())));
+                Collections.singletonList(new SimpleGrantedAuthority("USER")) // ✅ obligatoire
+        );
     }
 }

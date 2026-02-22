@@ -4,7 +4,6 @@ package com.you_soft.invoksa.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.Collection;
 import java.util.List;
 
 @AllArgsConstructor

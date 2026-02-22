@@ -7,6 +7,7 @@ import lombok.Data;
 
 @AllArgsConstructor
 @Data
+@Builder
 public class UserRequest {
     private Long id;
     private String username;
