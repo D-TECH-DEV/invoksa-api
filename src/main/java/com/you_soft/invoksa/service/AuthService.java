@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,9 +38,9 @@ public class AuthService {
 
     public ResponseEntity<?> register(User user) {
 
-        if (userRepository.findByUsername(user.getUsername()) != null) {
+        if (userRepository.findByEmail(user.getEmail()) != null) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Nom d'utilisateur déjà utilisé"));
+                    .body(Map.of("error", "Cette adresse email est déjà utilisé"));
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -76,14 +77,19 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
             if (authentication.isAuthenticated()) {
+
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
                 Map<String, Object> authData = new HashMap<>();
-                authData.put("token", "Bearer " + jwtUtils.generateJwtToken(user.getUsername()));
+                authData.put("token", "Bearer " + jwtUtils.generateJwtToken(userDetails));
 
                 return ResponseEntity.ok(authData);
             }
+
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Username ou utilisateur incorrect");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+
         } catch (AuthenticationException e) {
             log.error(e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
@@ -91,7 +97,6 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
-
 
     public ResponseEntity<?> verifyEmail(String token) {
         EmailVerificationToken verificationToken =

@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "invoice_items")
 @AllArgsConstructor
 @Data
 @Builder
+@NoArgsConstructor
 public class InvoiceItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
