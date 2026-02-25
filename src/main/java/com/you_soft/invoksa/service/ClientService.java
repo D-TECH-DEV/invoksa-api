@@ -1,7 +1,10 @@
 package com.you_soft.invoksa.service;
 
+import com.you_soft.invoksa.config.JwtUtils;
 import com.you_soft.invoksa.dto.request.ClientRequest;
 import com.you_soft.invoksa.dto.response.ClientResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.you_soft.invoksa.entity.Client;
 import com.you_soft.invoksa.entity.User;
 import com.you_soft.invoksa.mapper.ClientMapper;
@@ -9,6 +12,7 @@ import com.you_soft.invoksa.mapper.UserMapper;
 import com.you_soft.invoksa.repository.ClientRepository;
 import com.you_soft.invoksa.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +26,8 @@ public class ClientService {
     private final ClientMapper clientMapper;
     private final UserRepository userRepository;
     private UserMapper userMapper;
+    private final JwtUtils jwtUtils;
+
 
 
     public ClientResponse create(ClientRequest clientRequest) {
@@ -41,6 +47,31 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
+
+    public List<ClientResponse> getMyClients() {
+
+
+        User user = jwtUtils.getConnectedUser();
+
+        if (user == null) {
+           throw  new RuntimeException("User not found");
+        }
+
+        return clientRepository.findAllByUserId(user.getId())
+                .stream()
+                .map(clientMapper::toResponse)
+                .toList();
+    }
+
+    public List<ClientResponse> getByUser(Long userId) {
+        List<Client> clients = clientRepository.findAllByUserId(userId);
+        if (clients.isEmpty()) {
+            throw new RuntimeException("No clients found for this user");
+        }
+        return clients.stream()
+                .map(clientMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 
     public ClientResponse getById(Long id) {
         Client client = clientRepository.findById(id)

@@ -26,6 +26,16 @@ public class ClientController {
         return ResponseEntity.ok(clientService.getAll());
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ClientResponse>> getAllByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(clientService.getByUser(userId));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<ClientResponse>> getMyClients() {
+        return ResponseEntity.ok(clientService.getMyClients());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ClientResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(clientService.getById(id));

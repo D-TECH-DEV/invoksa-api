@@ -1,9 +1,16 @@
 package com.you_soft.invoksa.config;
 
+import com.you_soft.invoksa.entity.User;
+import com.you_soft.invoksa.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -14,14 +21,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@RequiredArgsConstructor
 @Component
 public class JwtUtils {
 
+    private  final UserRepository userRepository;
     @Value("${app.secret-key}")
     private String secretKey;
 
     @Value(("${app.expiration-time}"))
     private Long expirationTime;
+
+//    public JwtUtils(UserRepository userRepository) {
+//        this.userRepository = userRepository;
+//    }
+
+    public User getConnectedUser(){
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        return userRepository.findByUsername(authentication.getName());
+    }
 
     public String generateJwtToken(UserDetails userDetails) {
 
