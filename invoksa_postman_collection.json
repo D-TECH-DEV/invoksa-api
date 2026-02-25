@@ -1,0 +1,492 @@
+{
+    "info": {
+        "name": "Invoksa API",
+        "description": "Collection pour tester l'API Invoksa Spring Boot",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "jwt_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ROLE_USER\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.token) {",
+                                    "        var token = jsonData.token.replace('Bearer ', '');",
+                                    "        pm.collectionVariables.set('jwt_token', token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Email",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/verify?token=YOUR_TOKEN_HERE",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "verify"
+                            ],
+                            "query": [
+                                {
+                                    "key": "token",
+                                    "value": "YOUR_TOKEN_HERE"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Confirm Password Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/confirm-pwd/test@example.com/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "confirm-pwd",
+                                "test@example.com",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/reset-pwd/test@example.com/newpassword123",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "reset-pwd",
+                                "test@example.com",
+                                "newpassword123"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Clients",
+            "item": [
+                {
+                    "name": "Get All Clients",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/clients",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "clients"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Client",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"phone\": \"0123456789\",\n    \"address\": \"123 Main St\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/clients",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "clients"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Client by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/clients/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "clients",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Client",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"email\": \"john.updated@example.com\",\n    \"phone\": \"0987654321\",\n    \"address\": \"456 Updated Ave\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/clients/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "clients",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Client",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/clients/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "clients",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Invoices",
+            "item": [
+                {
+                    "name": "Get All Invoices",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Invoice",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"client\": {\n        \"id\": 1\n    },\n    \"user\": {\n        \"id\": 1\n    },\n    \"total\": 1500.00,\n    \"status\": \"PAYEE\",\n    \"items\": [\n        {\n            \"description\": \"Prestation de service\",\n            \"quantity\": 2,\n            \"price\": 500.00,\n            \"total\": 1000.00\n        },\n        {\n            \"description\": \"Frais de d\\u00e9placement\",\n            \"quantity\": 1,\n            \"price\": 500.00,\n            \"total\": 500.00\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Invoice by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Invoice",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"client\": {\n        \"id\": 1\n    },\n    \"user\": {\n        \"id\": 1\n    },\n    \"total\": 2000.00,\n    \"status\": \"PAYEE\",\n    \"items\": [\n        {\n            \"description\": \"Prestation de service\",\n            \"quantity\": 4,\n            \"price\": 500.00,\n            \"total\": 2000.00\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Invoice",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Invoice PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/invoices/invoices/1/pdf",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoices",
+                                "invoices",
+                                "1",
+                                "pdf"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "AI Generation",
+            "item": [
+                {
+                    "name": "Generate Invoice from Text",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/ia/invoice?description=Facture de 500 euros pour la creation de logo&lang=fr",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ia",
+                                "invoice"
+                            ],
+                            "query": [
+                                {
+                                    "key": "description",
+                                    "value": "Facture de 500 euros pour la creation de logo"
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "fr"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,22 +1,22 @@
 package com.you_soft.invoksa.entity;
 
+import com.you_soft.invoksa.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "clients")
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
-@NoArgsConstructor
 public class Client {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -24,10 +24,23 @@ public class Client {
     private String phone;
     private String address;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User user;
 
-    @OneToMany(mappedBy = "client")
-    private List<Invoice> invoices;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

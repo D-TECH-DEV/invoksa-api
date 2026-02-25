@@ -3,6 +3,7 @@ package com.you_soft.invoksa.mapper;
 import com.you_soft.invoksa.dto.request.ClientRequest;
 import com.you_soft.invoksa.dto.response.ClientResponse;
 import com.you_soft.invoksa.entity.Client;
+import com.you_soft.invoksa.entity.User;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
  @Component
 public class ClientMapper {
 
+    private final UserMapper userMapper;
 
     public ClientResponse toResponse(Client client) {
         return ClientResponse.builder()
@@ -22,10 +24,11 @@ public class ClientMapper {
 
 
     public Client toEntity(ClientRequest clientRequest) {
-       return Client.builder()
+        return Client.builder()
                 .name(clientRequest.getName())
                 .email(clientRequest.getEmail())
                 .phone(clientRequest.getPhone())
+                .address(clientRequest.getAddress())
                 .build();
     }
 }

@@ -3,8 +3,11 @@ package com.you_soft.invoksa.service;
 import com.you_soft.invoksa.dto.request.ClientRequest;
 import com.you_soft.invoksa.dto.response.ClientResponse;
 import com.you_soft.invoksa.entity.Client;
+import com.you_soft.invoksa.entity.User;
 import com.you_soft.invoksa.mapper.ClientMapper;
+import com.you_soft.invoksa.mapper.UserMapper;
 import com.you_soft.invoksa.repository.ClientRepository;
+import com.you_soft.invoksa.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,10 +20,16 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
+    private final UserRepository userRepository;
+    private UserMapper userMapper;
 
 
     public ClientResponse create(ClientRequest clientRequest) {
+
+        User user = userRepository.findById(clientRequest.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         Client client = clientMapper.toEntity(clientRequest);
+        client.setUser(user);
         Client clientSaved = clientRepository.save(client);
         return clientMapper.toResponse(clientSaved);
     }
