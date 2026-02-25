@@ -28,10 +28,7 @@ public class ClientService {
     private UserMapper userMapper;
     private final JwtUtils jwtUtils;
 
-
-
     public ClientResponse create(ClientRequest clientRequest) {
-
         User user = userRepository.findById(clientRequest.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Client client = clientMapper.toEntity(clientRequest);
@@ -40,23 +37,17 @@ public class ClientService {
         return clientMapper.toResponse(clientSaved);
     }
 
-
     public List<ClientResponse> getAll() {
         return clientRepository.findAll().stream()
                 .map(clientMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
-
     public List<ClientResponse> getMyClients() {
-
-
         User user = jwtUtils.getConnectedUser();
-
         if (user == null) {
            throw  new RuntimeException("User not found");
         }
-
         return clientRepository.findAllByUserId(user.getId())
                 .stream()
                 .map(clientMapper::toResponse)

@@ -32,6 +32,7 @@ public class Client {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {

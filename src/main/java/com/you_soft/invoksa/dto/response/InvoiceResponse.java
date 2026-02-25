@@ -13,7 +13,7 @@ import java.util.List;
 public class InvoiceResponse {
     private Long id;
     private ClientResponse client;
-    private UserResponse user;
+    //private UserResponse user;
     private Double total;
     private String status;
     private List<InvoiceItemResponse> items;

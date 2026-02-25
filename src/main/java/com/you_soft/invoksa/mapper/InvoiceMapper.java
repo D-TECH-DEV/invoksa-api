@@ -1,10 +1,14 @@
 package com.you_soft.invoksa.mapper;
 
+import com.you_soft.invoksa.dto.request.ClientRequest;
 import com.you_soft.invoksa.dto.request.InvoiceRequest;
 import com.you_soft.invoksa.dto.response.InvoiceItemResponse;
 import com.you_soft.invoksa.dto.response.InvoiceResponse;
+import com.you_soft.invoksa.entity.Client;
 import com.you_soft.invoksa.entity.Invoice;
 import com.you_soft.invoksa.entity.InvoiceItem;
+import com.you_soft.invoksa.repository.ClientRepository;
+import com.you_soft.invoksa.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +21,7 @@ public class InvoiceMapper {
     private final ClientMapper clientMapper;
     private  final InvoiceItemMapper invoiceItemMaper;
     private final UserMapper userMapper;
+    private final ClientRepository clientRepository;
 
 
     public InvoiceResponse toResponse(Invoice invoice) {
@@ -28,7 +33,7 @@ public class InvoiceMapper {
         return InvoiceResponse.builder()
                 .id(invoice.getId())
                 .client(clientMapper.toResponse(invoice.getClient())) // conversion Client -> ClientResponse
-                .user(userMapper.toResponse(invoice.getUser()))       // conversion User -> UserResponse
+                //.user(userMapper.toResponse(invoice.getUser()))       // conversion User -> UserResponse
                 .total(invoice.getTotal())
                 .status(invoice.getStatus())
                 .items(itemResponses)
@@ -41,10 +46,14 @@ public class InvoiceMapper {
                 .map(invoiceItemMaper::toEntity) // convertir InvoiceItemRequest -> InvoiceItem
                 .toList();
 
+        Client client = clientRepository.findById(invoiceRequest.getClientId())
+                .orElseThrow(() -> new RuntimeException("Client not found id " + invoiceRequest.getClientId()));
+
+
         Invoice invoice = Invoice.builder()
                 .id(invoiceRequest.getId())
-                .client(clientMapper.toEntity(invoiceRequest.getClient()))
-                .user(userMapper.toEntity(invoiceRequest.getUser()))
+                .client(client)
+                //.user(userMapper.toEntity(invoiceRequest.getUser()))
                 .total(invoiceRequest.getTotal())
                 .status(invoiceRequest.getStatus())
                 .items(items)
