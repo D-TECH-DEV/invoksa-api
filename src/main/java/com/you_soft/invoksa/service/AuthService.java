@@ -4,6 +4,7 @@ import com.you_soft.invoksa.config.JwtUtils;
 import com.you_soft.invoksa.entity.Client;
 import com.you_soft.invoksa.entity.EmailVerificationToken;
 import com.you_soft.invoksa.entity.User;
+import com.you_soft.invoksa.mapper.UserMapper;
 import com.you_soft.invoksa.repository.EmailVerificationTokenRepository;
 import com.you_soft.invoksa.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final UserMapper userMapper;
 
     public ResponseEntity<?> register(User user) {
 
@@ -74,24 +76,26 @@ public class AuthService {
     public ResponseEntity<?> login(User user) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+                    new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            user.getPassword()
+                    )
+            );
 
-            if (authentication.isAuthenticated()) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            // 🔥 Récupère l'utilisateur depuis la base
+            User userEntity = userRepository
+                    .findByUsername(userDetails.getUsername());
+                    //.orE(() -> new RuntimeException("User not found"));
 
-                Map<String, Object> authData = new HashMap<>();
-                authData.put("token", "Bearer " + jwtUtils.generateJwtToken(userDetails));
+            Map<String, Object> authData = new HashMap<>();
+            authData.put("token",  jwtUtils.generateJwtToken(userDetails));
+            authData.put("user", userMapper.toResponse(userEntity));
 
-                return ResponseEntity.ok(authData);
-            }
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Username ou utilisateur incorrect");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            return ResponseEntity.ok(authData);
 
         } catch (AuthenticationException e) {
-            log.error(e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Nom d'utilisateur ou mot de passe incorrect !");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);

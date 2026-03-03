@@ -4,6 +4,8 @@ import com.you_soft.invoksa.dto.request.InvoiceRequest;
 import com.you_soft.invoksa.dto.response.InvoiceResponse;
 import com.you_soft.invoksa.service.InvoiceService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +22,24 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getAll());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<InvoiceResponse> getById(@PathVariable Long id){
-        return ResponseEntity.ok(invoiceService.getById(id));
+//    @GetMapping("/{id}")
+//    public ResponseEntity<InvoiceResponse> getById(@PathVariable Long id){
+//        return ResponseEntity.ok(invoiceService.getById(id));
+//    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<InvoiceResponse>> getMyInvoice() {
+        return ResponseEntity.ok(invoiceService.getMyInvoices());
     }
 
     @PostMapping
     public ResponseEntity<InvoiceResponse> create(@RequestBody InvoiceRequest invoiceRequest) {
         return ResponseEntity.ok(invoiceService.create(invoiceRequest));
+    }
+
+    @GetMapping("/client/{id}")
+    public  ResponseEntity<List<InvoiceResponse>> getClientInvoices(@PathVariable Long id) {
+        return ResponseEntity.ok(invoiceService.getClientInvoices(id));
     }
 
     @PutMapping("/{id}")
@@ -39,5 +51,26 @@ public class InvoiceController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         invoiceService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    //juste pour le test de postman je vais  garder la méthode d'en haut
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
+        byte[] pdf = invoiceService.getInvoicePdf(id); // retourne juste le byte[]
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @GetMapping("/ai")
+    public ResponseEntity<byte[]> getInvoiceFromAi(
+            @RequestParam String description, @RequestParam String lang, @RequestParam String devise
+    ) {
+        byte[] pdf = invoiceService.invoicePdfAi(description, lang, devise);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_ai.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

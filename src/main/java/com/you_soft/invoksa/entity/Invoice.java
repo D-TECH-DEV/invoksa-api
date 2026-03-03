@@ -27,8 +27,10 @@ public class Invoice {
 //    @JoinColumn(name = "user_id", nullable = false)
 //    private User user;
 
-    private Double total;
-    private String status = "PENDING";
+    private Double sum;
+    private int status = 400;
+    private String address;
+    private String number ;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -49,6 +51,8 @@ public class Invoice {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    
 
 
 }

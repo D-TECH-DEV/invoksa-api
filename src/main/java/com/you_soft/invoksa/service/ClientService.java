@@ -3,9 +3,12 @@ package com.you_soft.invoksa.service;
 import com.you_soft.invoksa.config.JwtUtils;
 import com.you_soft.invoksa.dto.request.ClientRequest;
 import com.you_soft.invoksa.dto.response.ClientResponse;
+import com.you_soft.invoksa.dto.response.InvoiceResponse;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.you_soft.invoksa.entity.Client;
+import com.you_soft.invoksa.entity.Invoice;
 import com.you_soft.invoksa.entity.User;
 import com.you_soft.invoksa.mapper.ClientMapper;
 import com.you_soft.invoksa.mapper.UserMapper;
@@ -29,8 +32,9 @@ public class ClientService {
     private final JwtUtils jwtUtils;
 
     public ClientResponse create(ClientRequest clientRequest) {
-        User user = userRepository.findById(clientRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+       // User user = userRepository.findById(clientRequest.getUserId())
+         //       .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = jwtUtils.getConnectedUser();
         Client client = clientMapper.toEntity(clientRequest);
         client.setUser(user);
         Client clientSaved = clientRepository.save(client);
@@ -88,5 +92,8 @@ public class ClientService {
         }
         clientRepository.deleteById(id);
     }
+
+
+    
 
 }
