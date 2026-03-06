@@ -64,13 +64,9 @@ public class InvoiceController {
     }
 
     @GetMapping("/ai")
-    public ResponseEntity<byte[]> getInvoiceFromAi(
+    public ResponseEntity<InvoiceResponse> getInvoiceFromAi(
             @RequestParam String description, @RequestParam String lang, @RequestParam String devise
-    ) {
-        byte[] pdf = invoiceService.invoicePdfAi(description, lang, devise);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_ai.pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+    )  {
+        return ResponseEntity.ok(invoiceService.invoiceAi(description, lang, devise));
     }
 }

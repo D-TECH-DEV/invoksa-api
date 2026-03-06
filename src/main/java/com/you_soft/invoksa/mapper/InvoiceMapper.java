@@ -22,20 +22,26 @@ public class InvoiceMapper {
         private final ClientRepository clientRepository;
 
         public InvoiceResponse toResponse(Invoice invoice) {
-                List<InvoiceItemResponse> itemResponses = invoice.getItems()
-                                .stream()
-                                .map(invoiceItemMaper::toResponse) // méthode pour convertir InvoiceItem ->
-                                                                   // InvoiceItemResponse
-                                .toList();
+                List<InvoiceItemResponse> itemResponses = java.util.Collections.emptyList();
+                if (invoice.getItems() != null) {
+                        itemResponses = invoice.getItems()
+                                        .stream()
+                                        .map(invoiceItemMaper::toResponse) // méthode pour convertir InvoiceItem ->
+                                                                           // InvoiceItemResponse
+                                        .toList();
+                }
 
                 InvoiceResponse invoiceResponse = InvoiceResponse.builder()
                                 .id(invoice.getId())
-                                .client(clientMapper.toResponse(invoice.getClient())) // conversion Client ->
-                                                                                      // ClientResponse
-                                .sum(invoice.getSum())
+                                .client(invoice.getClient() != null ? clientMapper.toResponse(invoice.getClient())
+                                                : null)
+                                //.sum(invoice.getTotal())
+                                .total(invoice.getTotal())
                                 .number(invoice.getNumber())
-                                // .status(invoice.getStatus())
+                                 //.status(invoice.getStatus())
                                 .items(itemResponses)
+                                .createdAt(invoice.getCreatedAt() != null ? String.valueOf(invoice.getCreatedAt())
+                                                : null)
                                 .build();
                 invoiceResponse.setStatus(invoice.getStatus());
                 return invoiceResponse;
@@ -55,8 +61,8 @@ public class InvoiceMapper {
                                 .id(invoiceRequest.getId())
                                 .client(client)
                                 // .user(userMapper.toEntity(invoiceRequest.getUser()))
-                                .sum(invoiceRequest.getTotal())
-                                .status(invoiceRequest.getStatusCode())
+                                .total(invoiceRequest.getTotal())
+                                .status(invoiceRequest.getStatus())
                                 .items(items)
                                 .build();
 

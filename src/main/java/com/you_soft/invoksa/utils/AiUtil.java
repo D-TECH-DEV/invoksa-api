@@ -36,37 +36,31 @@ Rules:
 - Compute the global invoice total.
 
 - Default values:
-  - client: null if not specified
-  - user: null if not specified
-  - status: "PENDING"
+ 
+  - status: 500
 
 Output format MUST be strictly JSON like this:
 
-{
-  "client": { "id": null },
-  "user": { "id": null },
-  "total": 0,
-  "status": "PENDING",
+  
   "items": [
     {
       "description": "",
       "quantity": 1,
       "price": 0,
-      "total": 0
+      "total": quantity*prirce
     }
   ]
-}
+  
+
 
 Do not add explanations, markdown, or text outside JSON.
 """.formatted(lang, devise,  description);
 
-        var completion = Objects.requireNonNull(
+        return Objects.requireNonNull(
                 chatClient.prompt()
                         .user(prompt)
                         .call()
                         .content()
         );
-
-        return completion;
     }
 }

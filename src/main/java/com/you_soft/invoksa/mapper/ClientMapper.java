@@ -8,12 +8,15 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
- @Component
+@Component
 public class ClientMapper {
 
     private final UserMapper userMapper;
 
     public ClientResponse toResponse(Client client) {
+        if (client == null) {
+            return null;
+        }
         return ClientResponse.builder()
                 .id(client.getId())
                 .name(client.getName())
@@ -21,7 +24,6 @@ public class ClientMapper {
                 .phone(client.getPhone())
                 .build();
     }
-
 
     public Client toEntity(ClientRequest clientRequest) {
         return Client.builder()

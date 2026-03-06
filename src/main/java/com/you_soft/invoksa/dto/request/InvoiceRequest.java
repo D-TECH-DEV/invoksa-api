@@ -18,14 +18,14 @@ public class InvoiceRequest {
      * Accepte { "client": { "id": 1 } } depuis le JSON
      */
     private ClientRef client;
-
+ 
     private Double total;
-    private Double sum;
+    //private Double total;
 
     /**
      * "unpaid" | "paid" | "pending"
      */
-    private String status;
+    private int status;
 
     private List<InvoiceItemRequest> items;
 
@@ -39,7 +39,7 @@ public class InvoiceRequest {
     /**
      * Convertit le status String → int pour la persistence
      */
-    public int getStatusCode() {
+    public int getStatus( String status) {
         if ("unpaid".equals(status))
             return 400;
         if ("paid".equals(status))

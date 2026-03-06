@@ -1,5 +1,6 @@
 package com.you_soft.invoksa.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,26 +12,28 @@ import java.util.List;
 
 @Entity
 @Table(name = "invoices")
+@JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @Data
 @Builder
 @NoArgsConstructor
 public class Invoice {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-//    @ManyToOne
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
+    // @ManyToOne
+    // @JoinColumn(name = "user_id", nullable = false)
+    // private User user;
 
-    private Double sum;
-    private int status = 400;
+    private Double total;
+    private int status = 500;
     private String address;
-    private String number ;
+    private String number;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -51,8 +54,5 @@ public class Invoice {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    
-
 
 }
