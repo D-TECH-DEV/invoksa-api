@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "invoices")
@@ -35,9 +36,12 @@ public class Invoice {
     private String address;
     private String number;
 
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private String token;
+
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
     private List<InvoiceItem> items;
@@ -48,7 +52,12 @@ public class Invoice {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (token == null || token.isEmpty()) {
+            token = UUID.randomUUID().toString().replace("-", "");
+        }
+
     }
+
 
     @PreUpdate
     protected void onUpdate() {

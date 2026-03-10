@@ -56,6 +56,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/i/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 // ✅ JwtFilter s'exécute UNIQUEMENT dans la chaîne Spring Security
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

@@ -22,10 +22,10 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getAll());
     }
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<InvoiceResponse> getById(@PathVariable Long id){
-//        return ResponseEntity.ok(invoiceService.getById(id));
-//    }
+    @GetMapping("/{id}")
+    public ResponseEntity<InvoiceResponse> getById(@PathVariable Long id){
+        return ResponseEntity.ok(invoiceService.getById(id));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<List<InvoiceResponse>> getMyInvoice() {

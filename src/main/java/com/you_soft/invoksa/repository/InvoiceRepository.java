@@ -17,6 +17,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findAllByClientIn(List<Client> clients, Sort sort);
     List<Invoice> findAllByClientId(Long clientId, Sort sort);
 
+    Invoice findByToken(String token);
+
     List<Invoice> findAllByClientInOrderByCreatedAtDesc(List<Client> clients);
 
 

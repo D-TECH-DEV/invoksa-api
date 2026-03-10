@@ -103,6 +103,14 @@ public class InvoiceService {
                 return invoiceMapper.toResponse(invoice);
         }
 
+        public Invoice getByToken(String token) {
+                Invoice invoice = invoiceRepository.findByToken(token);
+                if (invoice == null) {
+                        throw new RuntimeException("Invoice not found");
+                }
+                return invoice;
+        }
+
         public InvoiceResponse update(Long id, InvoiceRequest invoiceRequest) {
                 Invoice invoice = invoiceRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
