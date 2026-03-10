@@ -147,6 +147,7 @@ public class InvoiceService {
 
                 Map<String, Object> invoiceMap = new HashMap<>();
                 invoiceMap.put("id", invoice.getId());
+                invoiceMap.put("number", invoice.getNumber());
                 invoiceMap.put("clientName", invoice.getClient() != null ? invoice.getClient().getName() : "____");
                 invoiceMap.put("date",
                                 invoice.getCreatedAt() != null ? invoice.getCreatedAt().toLocalDate().toString() : "");

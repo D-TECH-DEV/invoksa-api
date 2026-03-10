@@ -42,6 +42,8 @@ public class InvoiceMapper {
                                 .items(itemResponses)
                                 .createdAt(invoice.getCreatedAt() != null ? String.valueOf(invoice.getCreatedAt())
                                                 : null)
+                        .updatedAt(invoice.getUpdatedAt() != null ? String.valueOf(invoice.getCreatedAt())
+                                : null)
                                 .build();
                 invoiceResponse.setStatus(invoice.getStatus());
                 return invoiceResponse;

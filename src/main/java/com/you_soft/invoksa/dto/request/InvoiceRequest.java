@@ -39,15 +39,15 @@ public class InvoiceRequest {
     /**
      * Convertit le status String → int pour la persistence
      */
-    public int getStatus( String status) {
-        if ("unpaid".equals(status))
-            return 400;
-        if ("paid".equals(status))
-            return 200;
-        if ("pending".equals(status))
-            return 500;
-        return 501;
-    }
+//    public int getStatus( String status) {
+//        if ("unpaid".equals(status))
+//            return 400;
+//        if ("paid".equals(status))
+//            return 200;
+//        if ("pending".equals(status))
+//            return 500;
+//        return 501;
+//    }
 
     @Data
     @NoArgsConstructor

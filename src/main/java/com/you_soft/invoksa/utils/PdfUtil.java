@@ -18,28 +18,26 @@ public class PdfUtil {
     }
 
     public byte[] generateInvoicePdf(Map<String, Object> data) {
+
         try {
-            // Préparer le contexte Thymeleaf
+
             Context context = new Context();
             context.setVariables(data);
 
-            // Générer le HTML dynamique
-            String htmlContent = templateEngine.process("invoice.html", context);
+            String htmlContent = templateEngine.process("invoice", context);
 
-            // Convertir HTML -> PDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
             ITextRenderer renderer = new ITextRenderer();
             renderer.setDocumentFromString(htmlContent);
             renderer.layout();
             renderer.createPDF(baos);
-            baos.close();
+            //System.out.println("HTML généré : " + htmlContent);
 
             return baos.toByteArray();
 
         } catch (Exception e) {
             e.printStackTrace();
-            // En cas d'erreur, renvoyer un PDF vide ou un petit texte
-            return "Erreur lors de la génération du PDF".getBytes();
+            throw new RuntimeException("Erreur génération PDF");
         }
-    }
-}
+    }}

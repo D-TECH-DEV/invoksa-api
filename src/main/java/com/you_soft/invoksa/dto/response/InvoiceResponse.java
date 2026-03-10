@@ -23,6 +23,7 @@ public class InvoiceResponse {
 
     // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private String createdAt;
+    private String updatedAt;
 
     private List<InvoiceItemResponse> items;
 
