@@ -20,6 +20,7 @@ public class InvoiceResponse {
     private Double total;
     private String number;
     private String status;
+    private String token;
 
     // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private String createdAt;

@@ -1,0 +1,46 @@
+volumes:
+  mysql-data:
+
+networks:
+  spring-boot-mysql-network:
+
+services:
+
+  mysqldb:
+    image: mysql:lts
+    command: --mysql-native-password=on
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_DATABASE=invoksa_db
+      - MYSQL_USER=invoksa_user
+      - MYSQL_PASSWORD=MFPZBbT03Jxd2f8Oun7LytAlsB5a5KspaK+wzJcuAjw=
+      - MYSQL_ROOT_PASSWORD=SfyqlXRfEt9zbat6gyga2cI9uyWflc/b0MQwiwaeSbI=
+    networks:
+      - spring-boot-mysql-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      retries: 5
+      interval: 3s
+      timeout: 30s
+
+
+  invoksa:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/invoksa_db
+      - SPRING_DATASOURCE_USERNAME=invoksa_user
+      - SPRING_DATASOURCE_PASSWORD=MFPZBbT03Jxd2f8Oun7LytAlsB5a5KspaK+wzJcuAjw=
+    networks:
+      - spring-boot-mysql-network
+
+
+

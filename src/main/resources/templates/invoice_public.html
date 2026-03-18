@@ -72,6 +72,7 @@
                 <div class="text-end">
                     <span th:if="${invoice.status == 200}" class="status-paid">Payée</span>
                     <span th:if="${invoice.status == 500}" class="status-pending">Non payée</span>
+                    <span th:if="${invoice.status == 400}" class="status-pending">En attente</span>
                     <span th:if="${invoice.status != 200 and invoice.status != 500}" class="status-pending"
                         th:text="'Statut: ' + ${invoice.status}">Non payé</span>
                 </div>
