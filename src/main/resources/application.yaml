@@ -16,6 +16,13 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
 
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o # ou gpt-3.5-turbo
+
   mail:
     host: smtp.gmail.com
     port: 587
