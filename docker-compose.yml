@@ -1,7 +1,7 @@
 version: '3.8'
 
 volumes:
-  mysql-data:
+  mysql-data-invoksa:
 
 networks:
   spring-boot-mysql-network:
@@ -20,7 +20,7 @@ services:
     networks:
       - spring-boot-mysql-network
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mysql-data-invoksa:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       retries: 5
