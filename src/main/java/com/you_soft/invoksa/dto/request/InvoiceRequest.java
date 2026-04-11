@@ -14,31 +14,22 @@ public class InvoiceRequest {
 
     private Long id;
 
-    /**
-     * Accepte { "client": { "id": 1 } } depuis le JSON
-     */
+
     private ClientRef client;
  
     private Double total;
     //private Double total;
 
-    /**
-     * "unpaid" | "paid" | "pending"
-     */
+
     private int status;
 
     private List<InvoiceItemRequest> items;
 
-    /**
-     * Retourne l'id du client depuis l'objet imbriqué { "client": { "id": 1 } }
-     */
     public Long getClientId() {
         return client != null ? client.getId() : null;
     }
 
-    /**
-     * Convertit le status String → int pour la persistence
-     */
+
 //    public int getStatus( String status) {
 //        if ("unpaid".equals(status))
 //            return 400;

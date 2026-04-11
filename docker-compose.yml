@@ -12,10 +12,10 @@ services:
     ports:
       - "3308:3306"
     environment:
-      - MYSQL_DATABASE=invoksa_db
-      - MYSQL_USER=invoksa_user
-      - MYSQL_PASSWORD=MFPZBbT03Jxd2f8Oun7LytAlsB5a5KspaK+wzJcuAjw=
-      - MYSQL_ROOT_PASSWORD=SfyqlXRfEt9zbat6gyga2cI9uyWflc/b0MQwiwaeSbI=
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     networks:
       - spring-boot-mysql-network
     volumes:
@@ -39,6 +39,10 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/invoksa_db
       - SPRING_DATASOURCE_USERNAME=invoksa_user
       - SPRING_DATASOURCE_PASSWORD=MFPZBbT03Jxd2f8Oun7LytAlsB5a5KspaK+wzJcuAjw=
+      - MAIL_USERNAME=abdelmalikkouadjo@gmail.com
+      - MAIL_PASSWORD=xgwsdihnqldpljht
+      - OPENAI_API_KEY=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
+      - APP_SECRET_KEY=1293801802989812384238401820394812394
     networks:
       - spring-boot-mysql-network
 

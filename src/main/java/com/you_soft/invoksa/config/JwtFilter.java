@@ -26,10 +26,12 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        
+        final String authHeader = request.getHeader("Authorization");
+        String username = null;
+        String jwt = null;
+
         try {
-            final String authHeader = request.getHeader("Authorization");
-            String username = null;
-            String jwt = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 jwt = authHeader.substring(7);
                 username = jwtUtils.extractUsername(jwt);
@@ -44,12 +46,14 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            response.getWriter().write("{\"error\": \"Authentication failed: " + e.getMessage() + "\"}");
+            return;
         }
+
+        filterChain.doFilter(request, response);
     }
 
     @Override

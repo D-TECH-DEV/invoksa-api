@@ -1,9 +1,11 @@
 package com.you_soft.invoksa.dto.request;
 
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Data;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class InvoiceItemRequest {
     private Long id;

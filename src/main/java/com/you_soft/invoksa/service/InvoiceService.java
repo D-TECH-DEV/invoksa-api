@@ -111,6 +111,7 @@ public class InvoiceService {
                 return invoice;
         }
 
+        @Transactional
         public InvoiceResponse update(Long id, InvoiceRequest invoiceRequest) {
                 Invoice invoice = invoiceRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
@@ -123,24 +124,33 @@ public class InvoiceService {
                 // invoice.setUser(userMapper.toEntity(invoiceRequest.getUser()));
 
                 // Mettre à jour les items
+                // Force Hibernate to initialize the collection before clearing to avoid DelayedOperation queue bug
+                invoice.getItems().size();
                 invoice.getItems().clear(); // Supprime les anciens items
-                List<InvoiceItem> items = invoiceRequest.getItems()
-                                .stream()
-                                .map(invoiceItemMapper::toEntity)
-                                .toList();
-                items.forEach(item -> item.setInvoice(invoice));
-                invoice.getItems().addAll(items);
+                if (invoiceRequest.getItems() != null) {
+                        List<InvoiceItem> items = invoiceRequest.getItems()
+                                        .stream()
+                                        .map(invoiceItemMapper::toEntity)
+                                        .toList();
+                        items.forEach(item -> item.setInvoice(invoice));
+                        invoice.getItems().addAll(items);
+                }
 
-                double total = invoiceRequest.getItems().stream()
-                                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                                .sum();
-                invoice.setTotal(total);
+                if (invoiceRequest.getItems() != null) {
+                        double total = invoiceRequest.getItems().stream()
+                                        .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                                        .sum();
+                        invoice.setTotal(total);
+                } else {
+                        invoice.setTotal(invoiceRequest.getTotal() != null ? invoiceRequest.getTotal() : 0.0);
+                }
 
                 Invoice invoiceUpdated = invoiceRepository.save(invoice);
 
                 return invoiceMapper.toResponse(invoiceUpdated);
         }
 
+        @Transactional
         public void delete(Long id) {
                 Invoice invoice = invoiceRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
