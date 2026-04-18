@@ -48,7 +48,7 @@ pipeline {
         stage("Déploiement") {
             steps {
                 echo "Déploiement en cours"
-                sh "docker-compose up --build --detach"
+                sh "docker compose up --build --detach"
             }
         }
     }
