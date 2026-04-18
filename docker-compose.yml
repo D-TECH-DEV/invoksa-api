@@ -1,10 +1,8 @@
 version: '3.8'
 
-volumes:
-  mysql-data-invoksa:
-
 networks:
-  spring-boot-mysql-network:
+  main-network:
+    external: true
 
 services:
   mysqldb:
@@ -18,7 +16,7 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     networks:
-      - spring-boot-mysql-network
+      - main-network
     volumes:
       - mysql-data-invoksa:/var/lib/mysql
     healthcheck:
@@ -29,19 +27,21 @@ services:
 
   invoksa:
     build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      mysqldb:
-        condition: service_healthy
+    container_name: invoksa-app
+    expose:
+      - "8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/${MYSQL_DATABASE}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - APP_SECRET_KEY=${APP_SECRET_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
-      - spring-boot-mysql-network
+      - main-network
+    restart: always
+
+volumes:
+  mysql-data-invoksa:
