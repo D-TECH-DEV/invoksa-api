@@ -1,0 +1,26 @@
+version: '3.8'
+
+networks:
+  main-network:
+    external: true
+
+services:
+  invoksa:
+    build: .
+    container_name: invoksa-app
+    # On retire le port 8080 : Nginx Proxy Manager s'en chargera en interne
+    expose:
+      - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      # IMPORTANT : On pointe vers le service "db-shared" de l'infra
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - main-network
+    restart: always
