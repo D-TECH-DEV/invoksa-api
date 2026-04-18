@@ -5,6 +5,7 @@ networks:
     external: true
 
 services:
+
   invoksa:
     build: .
     container_name: invoksa-app
@@ -13,8 +14,7 @@ services:
       - "8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      # IMPORTANT : On pointe vers le service "db-shared" de l'infra
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE})
       - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -25,3 +25,5 @@ services:
       - main-network
     restart: always
 
+volumes:
+  mysql-data-invoksa:
