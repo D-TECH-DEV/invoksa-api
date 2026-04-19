@@ -50,7 +50,7 @@ pipeline {
                echo "Build de l'image Docker..."
                sh "docker build -t invoksa-app ."
                echo "Relance du conteneur..."
-               sh "docker-compose up -d"
+               sh "docker compose up"
             }
         }
     }
