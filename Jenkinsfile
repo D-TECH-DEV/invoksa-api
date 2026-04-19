@@ -47,10 +47,10 @@ pipeline {
 
         stage("Déploiement") {
             steps {
-               echo "Build de l'image Docker..."
-               sh "docker build -t invoksa-app ."
                echo "Relance du conteneur..."
-               sh "docker compose up"
+               sh "/usr/bin/docker compose up -d --build"
+
+docker compose up"
             }
         }
     }
