@@ -48,7 +48,7 @@ pipeline {
         stage("Déploiement") {
             steps {
                echo "Relance du conteneur..."
-               sh "/usr/bin/docker compose up -d --build"
+               sh "docker run -d --name invoksa-app --network main-network --env-file /root/java_project/invoksa-api/.env -p 8080:8080 invoksa-app:latest"
             }
         }
     }
