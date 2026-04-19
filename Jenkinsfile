@@ -49,8 +49,6 @@ pipeline {
             steps {
                echo "Relance du conteneur..."
                sh "/usr/bin/docker compose up -d --build"
-
-docker compose up"
             }
         }
     }
