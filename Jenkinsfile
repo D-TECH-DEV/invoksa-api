@@ -49,7 +49,7 @@ pipeline {
             steps {
                echo "Nettoyage et déploiement en cours..."
                sh "docker compose down"
-               sh "docker compose up -d --build --remove-orphans"
+               sh "docker compose up -d --build"
             }
         }
     }
@@ -57,7 +57,7 @@ pipeline {
     post {
         success {
             echo "Déploiement OK"
-            sh "docker system prune -f"
+            sh "docker image prune -f"
         }
 
         failure {
