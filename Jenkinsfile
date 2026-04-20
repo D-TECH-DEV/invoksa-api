@@ -48,6 +48,7 @@ pipeline {
         stage("Déploiement") {
             steps {
                echo "Déploiement en cours..."
+               sh "docker compose --version"
                sh "docker compose up"
             }
         }
