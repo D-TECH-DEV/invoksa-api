@@ -47,11 +47,9 @@ pipeline {
 
         stage("Déploiement") {
             steps {
-               echo "Déploiement en cours..."
-               sh "whoami"
-               sh "which docker"
-               sh "docker-compose version || docker compose version"
-              sh "docker-compose up -d --build || docker compose up -d --build"
+               echo "Nettoyage et déploiement en cours..."
+               sh "docker compose down"
+               sh "docker compose up -d --build --remove-orphans"
             }
         }
     }
