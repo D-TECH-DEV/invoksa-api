@@ -50,10 +50,8 @@ pipeline {
                echo "Déploiement en cours..."
                sh "whoami"
                sh "which docker"
-               sh "docker --version"
-               sh "docker compose version || true"
-               sh "docker compose --version"
-               sh "docker compose up"
+               sh "docker-compose version || docker compose version"
+              sh "docker-compose up -d --build || docker compose up -d --build"
             }
         }
     }
