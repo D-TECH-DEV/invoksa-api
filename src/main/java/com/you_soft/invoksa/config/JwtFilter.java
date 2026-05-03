@@ -47,10 +47,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Authentication failed: " + e.getMessage() + "\"}");
-            return;
+            // Au lieu d'écrire directement du JSON, on peut laisser passer ou logger
+            // Pour un filtre, si on veut une réponse JSON propre, on peut utiliser un Resolver
+            logger.error("Could not set user authentication in security context", e);
         }
 
         filterChain.doFilter(request, response);

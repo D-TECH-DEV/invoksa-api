@@ -31,56 +31,50 @@ public class InvoiceService {
 
         private final InvoiceRepository invoiceRepository;
         private final ClientRepository clientRepository;
-
         private final PdfUtil pdfUtil;
         private final AiUtil aiUtil;
         private final JwtUtils jwtUtils;
         private final MatriculeUtils matriculeUtils;
-
         private final InvoiceMapper invoiceMapper;
-
         private final InvoiceItemMapper invoiceItemMapper;
 
         @Transactional
         public InvoiceResponse create(InvoiceRequest invoiceRequest) {
-
                 Client client = clientRepository.findById(invoiceRequest.getClientId())
-                                .orElseThrow(
-                                                () -> new RuntimeException("Client introuvable avec l'id: "
-                                                                + invoiceRequest.getClientId()));
+                                .orElseThrow(() -> new ResourceNotFoundException("Client introuvable avec l'id: " + invoiceRequest.getClientId()));
 
-                // Crée la facture
                 Invoice invoice = Invoice.builder()
                                 .client(client)
-                                .total(invoiceRequest.getTotal())
                                 .status(invoiceRequest.getStatus())
                                 .build();
-                // Crée les items
+
                 List<InvoiceItem> items = invoiceRequest.getItems()
                                 .stream()
                                 .map(invoiceItemMapper::toEntity)
                                 .toList();
+                
                 items.forEach(item -> item.setInvoice(invoice));
                 invoice.setItems(items);
-                double total = invoiceRequest.getItems().stream()
+                
+                double total = items.stream()
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                                 .sum();
                 invoice.setTotal(total);
-
                 invoice.setNumber(matriculeUtils.generate(client));
+
                 return invoiceMapper.toResponse(invoiceRepository.save(invoice));
         }
 
         public List<InvoiceResponse> getAll() {
                 return invoiceRepository.findAll().stream()
                                 .map(invoiceMapper::toResponse)
-                                .collect(Collectors.toList());
+                                .toList();
         }
 
         public List<InvoiceResponse> getMyInvoices() {
                 User user = jwtUtils.getConnectedUser();
                 if (user == null) {
-                        throw new RuntimeException("User not found");
+                        throw new RuntimeException("Utilisateur non connecté");
                 }
                 List<Client> clients = clientRepository.findAllByUserId(user.getId());
                 return invoiceRepository.findAllByClientIn(clients, Sort.by(Sort.Direction.DESC, "createdAt"))
@@ -94,39 +88,26 @@ public class InvoiceService {
                                 .stream()
                                 .map(invoiceMapper::toResponse)
                                 .toList();
-
         }
 
         public InvoiceResponse getById(Long id) {
-                Invoice invoice = invoiceRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Invoice not found"));
-                return invoiceMapper.toResponse(invoice);
-        }
-
-        public Invoice getByToken(String token) {
-                Invoice invoice = invoiceRepository.findByToken(token);
-                if (invoice == null) {
-                        throw new RuntimeException("Invoice not found");
-                }
-                return invoice;
+                return invoiceRepository.findById(id)
+                                .map(invoiceMapper::toResponse)
+                                .orElseThrow(() -> new ResourceNotFoundException("Facture non trouvée"));
         }
 
         @Transactional
         public InvoiceResponse update(Long id, InvoiceRequest invoiceRequest) {
                 Invoice invoice = invoiceRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Facture non trouvée"));
+                
                 Client client = clientRepository.findById(invoiceRequest.getClientId())
-                                .orElseThrow(() -> new RuntimeException("Client not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Client non trouvé"));
 
-                invoice.setTotal(invoiceRequest.getTotal());
-                invoice.setStatus(invoiceRequest.getStatus());
                 invoice.setClient(client);
-                // invoice.setUser(userMapper.toEntity(invoiceRequest.getUser()));
+                invoice.setStatus(invoiceRequest.getStatus());
 
-                // Mettre à jour les items
-                // Force Hibernate to initialize the collection before clearing to avoid DelayedOperation queue bug
-                invoice.getItems().size();
-                invoice.getItems().clear(); // Supprime les anciens items
+                invoice.getItems().clear();
                 if (invoiceRequest.getItems() != null) {
                         List<InvoiceItem> items = invoiceRequest.getItems()
                                         .stream()
@@ -134,42 +115,43 @@ public class InvoiceService {
                                         .toList();
                         items.forEach(item -> item.setInvoice(invoice));
                         invoice.getItems().addAll(items);
-                }
-
-                if (invoiceRequest.getItems() != null) {
-                        double total = invoiceRequest.getItems().stream()
+                        
+                        double total = items.stream()
                                         .mapToDouble(item -> item.getPrice() * item.getQuantity())
                                         .sum();
                         invoice.setTotal(total);
-                } else {
-                        invoice.setTotal(invoiceRequest.getTotal() != null ? invoiceRequest.getTotal() : 0.0);
                 }
 
-                Invoice invoiceUpdated = invoiceRepository.save(invoice);
-
-                return invoiceMapper.toResponse(invoiceUpdated);
+                return invoiceMapper.toResponse(invoiceRepository.save(invoice));
         }
 
         @Transactional
         public void delete(Long id) {
-                Invoice invoice = invoiceRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Invoice not found"));
-                invoice.setDeleted(1);
-                Invoice invoiceDeleted = invoiceRepository.save(invoice);
+                if (!invoiceRepository.existsById(id)) {
+                        throw new ResourceNotFoundException("Facture non trouvée");
+                }
+                invoiceRepository.deleteById(id);
         }
 
-        public byte[] getInvoicePdf(Long id) {
+        public byte[] getInvoicePdf(Long id, String color, String companyName, String companyPhone, String companyEmail, String companyAddress, String legalMentions) {
                 Invoice invoice = invoiceRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Invoice not found"));
-                // System.out.println(invoice);
+                                .orElseThrow(() -> new ResourceNotFoundException("Facture non trouvée"));
+
+                // Status verification for pdf output
+                String statusName = "PENDING";
+                if (invoice.getStatus() == 200 || "PAID".equalsIgnoreCase(String.valueOf(invoice.getStatus()))) {
+                    statusName = "PAID";
+                } else if ("DRAFT".equalsIgnoreCase(String.valueOf(invoice.getStatus()))) {
+                    statusName = "DRAFT";
+                }
 
                 Map<String, Object> invoiceMap = new HashMap<>();
                 invoiceMap.put("id", invoice.getId());
                 invoiceMap.put("number", invoice.getNumber());
                 invoiceMap.put("clientName", invoice.getClient() != null ? invoice.getClient().getName() : "____");
-                invoiceMap.put("date",
-                                invoice.getCreatedAt() != null ? invoice.getCreatedAt().toLocalDate().toString() : "");
+                invoiceMap.put("date", invoice.getCreatedAt() != null ? invoice.getCreatedAt().toLocalDate().toString() : "");
                 invoiceMap.put("total", invoice.getTotal() != null ? invoice.getTotal() : 0.0);
+                invoiceMap.put("status", statusName);
 
                 List<Map<String, Object>> itemsList = invoice.getItems().stream().map(item -> {
                         Map<String, Object> itemMap = new HashMap<>();
@@ -177,12 +159,21 @@ public class InvoiceService {
                         itemMap.put("price", item.getPrice() != null ? item.getPrice() : 0.0);
                         itemMap.put("quantity", item.getQuantity() != null ? item.getQuantity() : 0);
                         return itemMap;
-                }).collect(Collectors.toList());
+                }).toList();
 
                 invoiceMap.put("items", itemsList);
 
+                Map<String, Object> configMap = new HashMap<>();
+                configMap.put("color", color != null && !color.isEmpty() ? color : "#3498db");
+                configMap.put("companyName", companyName != null ? companyName : "Notre Entreprise");
+                configMap.put("companyPhone", companyPhone != null ? companyPhone : "");
+                configMap.put("companyEmail", companyEmail != null ? companyEmail : "");
+                configMap.put("companyAddress", companyAddress != null ? companyAddress : "");
+                configMap.put("legalMentions", legalMentions != null ? legalMentions : "");
+
                 Map<String, Object> data = new HashMap<>();
                 data.put("invoice", invoiceMap);
+                data.put("config", configMap);
 
                 return pdfUtil.generateInvoicePdf(data);
         }
@@ -190,14 +181,11 @@ public class InvoiceService {
         public InvoiceResponse invoiceAi(String description, String lang, String devise) {
                 try {
                         String jsonInvoice = aiUtil.getInvoiceFromAi(description, lang, devise);
-
-                        // Convertir JSON -> Invoice
                         ObjectMapper objectMapper = new ObjectMapper();
                         Invoice invoice = objectMapper.readValue(jsonInvoice, Invoice.class);
                         return invoiceMapper.toResponse(invoice);
                 } catch (Exception e) {
-                        // e.printStackTrace();
-                        throw new RuntimeException("Erreur génération facture IA : " + e.getMessage(), e);
+                        throw new RuntimeException("Erreur génération facture IA : " + e.getMessage());
                 }
         }
 }

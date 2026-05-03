@@ -24,14 +24,13 @@ public class User {
     private String password;
     private String role;
     private boolean emailVerified;
+    private String provider; // "local" or "google"
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<Client> clients;
 
     @PrePersist

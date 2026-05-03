@@ -20,8 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // ✅ Injecte le bean Spring (pas new JwtFilter(...))
     private final JwtFilter jwtFilter;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -34,18 +34,10 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    /**
-     * ⚡ CRITIQUE : Empêche Spring Boot d'enregistrer JwtFilter (@Component)
-     * comme filtre Servlet en dehors de la chaîne Spring Security.
-     *
-     * Sans ça, JwtFilter s'exécute dans la chaîne Servlet, met l'auth dans
-     * SecurityContextHolder, puis SecurityContextHolderFilter (Spring Security)
-     * l'écrase avec un SecurityContext vide → 403.
-     */
     @Bean
     public FilterRegistrationBean<JwtFilter> jwtFilterRegistration(JwtFilter jwtFilter) {
         FilterRegistrationBean<JwtFilter> registration = new FilterRegistrationBean<>(jwtFilter);
-        registration.setEnabled(false); // ✅ Désactive l'enregistrement automatique Servlet
+        registration.setEnabled(false);
         return registration;
     }
 
@@ -57,9 +49,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/i/**").permitAll()
+                        .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
-                // ✅ JwtFilter s'exécute UNIQUEMENT dans la chaîne Spring Security
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2AuthenticationSuccessHandler))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

@@ -39,6 +39,17 @@
 <body>
 
 <h2>Facture #<span th:text="${invoice.number}"></span></h2>
+<p>
+    <strong>Statut: </strong><span th:text="${invoice.status}"></span>
+</p>
+
+<!-- Config injection -->
+<div style="margin-bottom: 20px;">
+    <h3 th:style="'color: ' + ${config.color}" th:text="${config.companyName}"></h3>
+    <p th:if="${config.companyAddress != ''}" th:text="${config.companyAddress}"></p>
+    <p th:if="${config.companyPhone != ''}" th:text="${config.companyPhone}"></p>
+    <p th:if="${config.companyEmail != ''}" th:text="${config.companyEmail}"></p>
+</div>
 
 <p>Client : <span th:text="${invoice.clientName}"></span></p>
 <p>Date : <span th:text="${invoice.date}"></span></p>
@@ -46,7 +57,7 @@
 <table>
 
     <thead>
-    <tr>
+    <tr th:style="'background-color: ' + ${config.color} + '; color: #fff;'">
         <th>Article</th>
         <th>Prix</th>
         <th>Quantité</th>
@@ -67,9 +78,14 @@
 
 </table>
 
-<p class="total">
+<p class="total" th:style="'color: ' + ${config.color}">
     Total Facture : <span th:text="${invoice.total}"></span>
 </p>
+
+<div th:if="${config.legalMentions != ''}" style="margin-top: 50px; font-size: 10px; color: #555; text-align: center;">
+    <hr/>
+    <p th:text="${config.legalMentions}"></p>
+</div>
 
 </body>
 </html>

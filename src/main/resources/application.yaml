@@ -10,8 +10,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -37,4 +37,19 @@ spring:
 
 app:
   secret-key: ${APP_SECRET_KEY}
-  expiration-time: 2592000000
+  expiration-time: 86400000 # 24 heures
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  oauth2:
+    redirect-uri: ${APP_FRONTEND_URL:http://localhost:3000}/api/oauth2/redirect
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile

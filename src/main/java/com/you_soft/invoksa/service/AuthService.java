@@ -1,7 +1,10 @@
 package com.you_soft.invoksa.service;
 
 import com.you_soft.invoksa.config.JwtUtils;
-import com.you_soft.invoksa.entity.Client;
+import com.you_soft.invoksa.dto.request.LoginRequest;
+import com.you_soft.invoksa.dto.request.RegisterRequest;
+import com.you_soft.invoksa.dto.request.ResetPasswordRequest;
+import com.you_soft.invoksa.dto.response.UserResponse;
 import com.you_soft.invoksa.entity.EmailVerificationToken;
 import com.you_soft.invoksa.entity.User;
 import com.you_soft.invoksa.mapper.UserMapper;
@@ -9,15 +12,14 @@ import com.you_soft.invoksa.repository.EmailVerificationTokenRepository;
 import com.you_soft.invoksa.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -25,8 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
-@RestController
-@RequestMapping("/api/auth")
+@Service
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -38,130 +39,106 @@ public class AuthService {
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final UserMapper userMapper;
 
-    public ResponseEntity<?> register(User user) {
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Cette adresse email est déjà utilisé"));
+    @Transactional
+    public UserResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()) != null) {
+            throw new RuntimeException("Cette adresse email est déjà utilisée");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setEmailVerified(false);
-        // user.setFirstLogin(true);
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole() != null ? request.getRole() : "ROLE_USER")
+                .emailVerified(false)
+                .provider("local")
+                .build();
 
         User savedUser = userRepository.save(user);
-
-        // crééer le token
         String tokenEmailCheck = createToken(savedUser, "email_verify");
 
-        EmailVerificationToken token = new EmailVerificationToken();
-        token.setToken(tokenEmailCheck);
-        token.setUser(savedUser);
-        token.setExpirationDate(
-                new Date(System.currentTimeMillis() + 1000 * 60 * 15)
-        );
-        emailVerificationTokenRepository.save(token);
-        emailService.sendEmail(
-                savedUser.getEmail(),
-                "Vérification de votre compte",
-
-                "Cliquez sur ce lien : http://localhost:8080/api/auth/verify?token=" + tokenEmailCheck +
-                        "vous avez 15 minutes pour confirmer le mail !"
-        );
-
-
-        return ResponseEntity.ok("Email de vérification envoyé");
-    }
-
-    public ResponseEntity<?> login(User user) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            user.getUsername(),
-                            user.getPassword()
-                    )
+            emailService.sendEmail(
+                    savedUser.getEmail(),
+                    "Vérification de votre compte",
+                    "Cliquez sur ce lien : " + baseUrl + "/api/auth/verify?token=" + tokenEmailCheck +
+                            " (Vous avez 15 minutes pour confirmer le mail !)"
             );
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-            // 🔥 Récupère l'utilisateur depuis la base
-            User userEntity = userRepository
-                    .findByUsername(userDetails.getUsername());
-                    //.orE(() -> new RuntimeException("User not found"));
-
-            Map<String, Object> authData = new HashMap<>();
-            authData.put("token",  jwtUtils.generateJwtToken(userDetails));
-            authData.put("user", userMapper.toResponse(userEntity));
-
-            return ResponseEntity.ok(authData);
-
-        } catch (AuthenticationException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Nom d'utilisateur ou mot de passe incorrect !");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de l'email de vérification: {}", e.getMessage());
         }
+
+        return userMapper.toResponse(savedUser);
     }
 
-    public ResponseEntity<?> verifyEmail(String token) {
+    public Map<String, Object> login(LoginRequest request) {
+        String identifier = request.getUsername();
+        if (identifier == null || identifier.isEmpty()) {
+            identifier = request.getEmail();
+        }
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        identifier,
+                        request.getPassword()
+                )
+        );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User userEntity = userRepository.findByUsername(userDetails.getUsername());
+
+        Map<String, Object> authData = new HashMap<>();
+        authData.put("token", jwtUtils.generateJwtToken(userDetails));
+        authData.put("user", userMapper.toResponse(userEntity));
+
+        return authData;
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
         EmailVerificationToken verificationToken =
                 emailVerificationTokenRepository.findByTokenAndType(token, "email_verify");
 
         if (verificationToken == null) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Token invalide");
+            throw new RuntimeException("Token invalide");
         }
         if (verificationToken.getExpirationDate().before(new Date())) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Token expiré");
+            throw new RuntimeException("Token expiré");
         }
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
         emailVerificationTokenRepository.delete(verificationToken);
-        return ResponseEntity.ok("Email vérifié avec succès");
     }
 
-    public ResponseEntity<?> confirmPasswordEmail(String email) {
+    public void confirmPasswordEmail(String email) {
         User user = userRepository.findByEmail(email);
-                //.orElseThrow(() -> new RuntimeException("Client not found"));
-        if (user==null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Email incorrect !"));
+        if (user == null) {
+            throw new RuntimeException("Email incorrect !");
         }
         String tokenEmailCheck = createToken(user, "confirm_password");
         emailService.sendEmail(
                 user.getEmail(),
-                "Vérification de votre compte",
-
-                "Cliquez sur ce lien : http://localhost:8080/api/auth/verify/confirm-pwd?token=" + tokenEmailCheck +
-                        "vous avez 15 minutes pour confirmer le mail !"
+                "Réinitialisation de mot de passe",
+                "Cliquez sur ce lien pour réinitialiser votre mot de passe : " + baseUrl + "/api/auth/reset-pwd-form?token=" + tokenEmailCheck
         );
-        return new ResponseEntity<>("Mail de confimation envoyé au mail",HttpStatus.OK);
     }
 
-    public ResponseEntity<?> resetPassword(String email, String newPwd) {
-
-        User user = userRepository.findByEmail(email);
-        if(user != null)  {
-            user.setPassword(passwordEncoder.encode(newPwd));
-            userRepository.save(user);
-            return ResponseEntity.ok("Mot de passe modifié avec succès");
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail());
+        if (user == null) {
+            throw new RuntimeException("Aucun utilisateur n'a cet email");
         }
-
-        return ResponseEntity.ok("Aucun utilisateur n'a ce email");
-
-
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
-
-    public String generateToken(){
-        return UUID.randomUUID().toString();
-    }
-
-    public String createToken(User user, String tokenType) {
-        String token = generateToken();
+    private String createToken(User user, String tokenType) {
+        String token = UUID.randomUUID().toString();
         EmailVerificationToken emailVerificationToken = new EmailVerificationToken();
         emailVerificationToken.setToken(token);
         emailVerificationToken.setUser(user);
@@ -169,6 +146,7 @@ public class AuthService {
         emailVerificationToken.setExpirationDate(
                 new Date(System.currentTimeMillis() + 1000 * 60 * 15)
         );
+        emailVerificationTokenRepository.save(emailVerificationToken);
         return token;
     }
 }

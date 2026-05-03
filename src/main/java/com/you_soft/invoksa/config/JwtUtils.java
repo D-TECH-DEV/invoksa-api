@@ -25,31 +25,29 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    private  final UserRepository userRepository;
+    private final UserRepository userRepository;
+    
     @Value("${app.secret-key}")
     private String secretKey;
 
-    @Value(("${app.expiration-time}"))
+    @Value("${app.expiration-time}")
     private Long expirationTime;
 
-//    public JwtUtils(UserRepository userRepository) {
-//        this.userRepository = userRepository;
-//    }
-
-    public User getConnectedUser(){
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+    public User getConnectedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
         return userRepository.findByUsername(authentication.getName());
     }
 
     public String generateJwtToken(UserDetails userDetails) {
-
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDetails.getAuthorities()
                 .stream()
                 .findFirst()
-                .get()
-                .getAuthority());
+                .map(grantedAuthority -> grantedAuthority.getAuthority())
+                .orElse("ROLE_USER"));
 
         return createJwtToken(claims, userDetails.getUsername());
     }
@@ -62,17 +60,21 @@ public class JwtUtils {
                 .setExpiration(new Date((System.currentTimeMillis() + expirationTime)))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
-
     }
 
     private Key getSignKey() {
+        // En production, cette clé devrait être encodée en Base64 dans les properties
         byte[] keyBytes = secretKey.getBytes();
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try {
+            String username = extractUsername(token);
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String extractUsername(String token) {
@@ -92,11 +94,10 @@ public class JwtUtils {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpriationDate(token).before(new Date());
+        return extractExpirationDate(token).before(new Date());
     }
 
-    private Date extractExpriationDate(String token) {
+    private Date extractExpirationDate(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
-
 }

@@ -55,8 +55,14 @@ public class InvoiceController {
 
     //juste pour le test de postman je vais  garder la méthode d'en haut
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
-        byte[] pdf = invoiceService.getInvoicePdf(id); // retourne juste le byte[]
+    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String tel,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String legalMentions) {
+        byte[] pdf = invoiceService.getInvoicePdf(id, color, name, tel, email, address, legalMentions); // retourne juste le byte[]
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_" + id + ".pdf")
                 .contentType(MediaType.APPLICATION_PDF)

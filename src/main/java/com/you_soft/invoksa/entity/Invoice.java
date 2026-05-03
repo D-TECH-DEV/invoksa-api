@@ -15,37 +15,35 @@ import java.util.UUID;
 @Table(name = "invoices")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
-@Data
-@Builder
 @NoArgsConstructor
+@Builder
+@Getter
+@Setter
+@SQLDelete(sql = "UPDATE invoices SET deleted = 1, deleted_at = NOW() WHERE id = ?")
+@Where(clause = "deleted = 0")
 public class Invoice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
-
-    // @ManyToOne
-    // @JoinColumn(name = "user_id", nullable = false)
-    // private User user;
 
     private Double total;
     private int status = 500;
     private String address;
     private String number;
 
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
     private String token;
 
-
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items;
 
+    @Column(nullable = false)
     private int deleted = 0;
 
     @PrePersist
@@ -55,13 +53,10 @@ public class Invoice {
         if (token == null || token.isEmpty()) {
             token = UUID.randomUUID().toString().replace("-", "");
         }
-
     }
-
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }
