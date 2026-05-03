@@ -35,14 +35,6 @@ spring:
           starttls:
             enable: true
 
-app:
-  secret-key: ${APP_SECRET_KEY}
-  expiration-time: 86400000 # 24 heures
-  base-url: ${APP_BASE_URL:http://localhost:8080}
-  oauth2:
-    redirect-uri: ${APP_FRONTEND_URL:http://localhost:3000}/api/oauth2/redirect
-
-spring:
   security:
     oauth2:
       client:
@@ -53,3 +45,11 @@ spring:
             scope:
               - email
               - profile
+
+app:
+  secret-key: ${APP_SECRET_KEY}
+  expiration-time: 86400000 # 24 heures
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  oauth2:
+    redirect-uri: ${APP_FRONTEND_URL:http://localhost:3000}/api/oauth2/redirect
+
