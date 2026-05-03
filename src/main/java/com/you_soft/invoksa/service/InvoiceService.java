@@ -15,6 +15,7 @@ import com.you_soft.invoksa.repository.InvoiceRepository;
 import com.you_soft.invoksa.utils.AiUtil;
 import com.you_soft.invoksa.utils.MatriculeUtils;
 import com.you_soft.invoksa.utils.PdfUtil;
+import com.you_soft.invoksa.exception.ResourceNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -178,7 +179,15 @@ public class InvoiceService {
                 return pdfUtil.generateInvoicePdf(data);
         }
 
-        public InvoiceResponse invoiceAi(String description, String lang, String devise) {
+        public Invoice getByToken(String token) {
+        Invoice invoice = invoiceRepository.findByToken(token);
+        if (invoice == null) {
+            throw new ResourceNotFoundException("Facture non trouvée avec ce token");
+        }
+        return invoice;
+    }
+
+    public InvoiceResponse invoiceAi(String description, String lang, String devise) {
                 try {
                         String jsonInvoice = aiUtil.getInvoiceFromAi(description, lang, devise);
                         ObjectMapper objectMapper = new ObjectMapper();
