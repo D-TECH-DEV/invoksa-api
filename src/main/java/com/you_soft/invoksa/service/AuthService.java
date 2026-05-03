@@ -44,6 +44,9 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
+        long startTime = System.currentTimeMillis();
+        log.info("Début inscription pour: {}", request.getEmail());
+
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("Cette adresse email est déjà utilisée");
         }
@@ -58,20 +61,26 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        log.info("Utilisateur enregistré (ID: {}) en {}ms", savedUser.getId(), (System.currentTimeMillis() - startTime));
+
         String tokenEmailCheck = createToken(savedUser, "email_verify");
 
         try {
+            log.info("Lancement de l'envoi d'email...");
             emailService.sendEmail(
                     savedUser.getEmail(),
                     "Vérification de votre compte",
                     "Cliquez sur ce lien : " + baseUrl + "/api/auth/verify?token=" + tokenEmailCheck +
                             " (Vous avez 15 minutes pour confirmer le mail !)"
             );
+            log.info("Appel emailService.sendEmail terminé");
         } catch (Exception e) {
             log.error("Erreur lors de l'envoi de l'email de vérification: {}", e.getMessage());
         }
 
-        return userMapper.toResponse(savedUser);
+        UserResponse response = userMapper.toResponse(savedUser);
+        log.info("Inscription terminée en {}ms total", (System.currentTimeMillis() - startTime));
+        return response;
     }
 
     public Map<String, Object> login(LoginRequest request) {

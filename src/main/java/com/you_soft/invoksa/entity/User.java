@@ -23,7 +23,7 @@ public class User {
     private String password;
     private String role;
     private boolean emailVerified;
-    private String provider; // "local" or "google"
+    private String provider; // "local" ou "google"
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
