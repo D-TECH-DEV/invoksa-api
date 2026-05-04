@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -45,7 +46,7 @@ public class AuthService {
     @Transactional
     public UserResponse register(RegisterRequest request) {
         long startTime = System.currentTimeMillis();
-        log.info("Début inscription pour: {}", request.getEmail());
+        log.info("--- DEBUT INSCRIPTION: {} ---", request.getEmail());
 
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("Cette adresse email est déjà utilisée");
@@ -61,25 +62,31 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("Utilisateur enregistré (ID: {}) en {}ms", savedUser.getId(), (System.currentTimeMillis() - startTime));
-
         String tokenEmailCheck = createToken(savedUser, "email_verify");
+        
+        log.info("Utilisateur et Token enregistrés en {}ms. Préparation de la réponse.", (System.currentTimeMillis() - startTime));
 
-        try {
-            log.info("Lancement de l'envoi d'email...");
-            emailService.sendEmail(
-                    savedUser.getEmail(),
-                    "Vérification de votre compte",
-                    "Cliquez sur ce lien : " + baseUrl + "/api/auth/verify?token=" + tokenEmailCheck +
-                            " (Vous avez 15 minutes pour confirmer le mail !)"
-            );
-            log.info("Appel emailService.sendEmail terminé");
-        } catch (Exception e) {
-            log.error("Erreur lors de l'envoi de l'email de vérification: {}", e.getMessage());
-        }
+        // SOLUTION RADICALE: On lance l'envoi d'e-mail dans un thread totalement indépendant
+        // pour ne pas bloquer le thread de la requête HTTP.
+        final String userEmail = savedUser.getEmail();
+        final String verificationUrl = baseUrl + "/api/auth/verify?token=" + tokenEmailCheck;
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                log.info("[ASYNC] Début envoi e-mail vers {}", userEmail);
+                emailService.sendEmail(
+                        userEmail,
+                        "Vérification de votre compte",
+                        "Cliquez sur ce lien : " + verificationUrl + " (Valable 15 minutes)"
+                );
+                log.info("[ASYNC] E-mail envoyé avec succès !");
+            } catch (Exception e) {
+                log.error("[ASYNC] Erreur critique lors de l'envoi d'email: {}", e.getMessage());
+            }
+        });
 
         UserResponse response = userMapper.toResponse(savedUser);
-        log.info("Inscription terminée en {}ms total", (System.currentTimeMillis() - startTime));
+        log.info("--- FIN INSCRIPTION (Réponse renvoyée en {}ms) ---", (System.currentTimeMillis() - startTime));
         return response;
     }
 
@@ -129,11 +136,18 @@ public class AuthService {
             throw new RuntimeException("Email incorrect !");
         }
         String tokenEmailCheck = createToken(user, "confirm_password");
-        emailService.sendEmail(
-                user.getEmail(),
-                "Réinitialisation de mot de passe",
-                "Cliquez sur ce lien pour réinitialiser votre mot de passe : " + baseUrl + "/api/auth/reset-pwd-form?token=" + tokenEmailCheck
-        );
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendEmail(
+                        user.getEmail(),
+                        "Réinitialisation de mot de passe",
+                        "Cliquez ici : " + baseUrl + "/api/auth/reset-pwd-form?token=" + tokenEmailCheck
+                );
+            } catch (Exception e) {
+                log.error("Erreur envoi email reset-pwd", e);
+            }
+        });
     }
 
     @Transactional
