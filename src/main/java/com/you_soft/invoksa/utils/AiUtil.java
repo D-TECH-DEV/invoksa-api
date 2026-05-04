@@ -16,51 +16,59 @@ public class AiUtil {
     public String getInvoiceFromAi(String description, String lang, String devise) {
 
         var prompt = """
-You are an invoice generator.
-
-Generate a structured invoice in JSON format only.
+You are an expert invoice processing assistant. 
+Your task is to extract line items from a user description and return a valid JSON object.
 
 Language: %s
-currency: %s
+Currency: %s
 User description: %s
 
-Rules:
-- Analyze the user description and generate invoice items logically.
-- Create between 1 and 10 invoice items.
-- Each item must contain:
-  - description
-  - quantity (integer >=1)
-  - price (number)
-  - total = quantity * price
+RULES:
+1. Extract or infer invoice items (description, quantity, price).
+2. Generate between 1 and 10 items.
+3. If quantity is not mentioned, use 1.
+4. If price is not mentioned, use 0.
+5. Calculate 'total' for each item: quantity * price.
+6. Calculate the global 'total' for the invoice.
+7. Return ONLY the JSON object. No preamble, no markdown code blocks, no explanation.
 
-- Compute the global invoice total.
-
-- Default values:
- 
-  - status: 500
-
-Output format MUST be strictly JSON like this:
-
-  
+JSON STRUCTURE:
+{
+  "total": 0.0,
+  "status": 500,
   "items": [
     {
-      "description": "",
+      "description": "Item description",
       "quantity": 1,
-      "price": 0,
-      "total": quantity*prirce
+      "price": 100.0,
+      "total": 100.0
     }
   ]
-  
+}
+""".formatted(lang, devise, description);
 
-
-Do not add explanations, markdown, or text outside JSON.
-""".formatted(lang, devise,  description);
-
-        return Objects.requireNonNull(
+        String response = Objects.requireNonNull(
                 chatClient.prompt()
                         .user(prompt)
                         .call()
                         .content()
         );
+
+        // Nettoyage au cas où l'IA inclurait des balises markdown ```json
+        return cleanJsonResponse(response);
+    }
+
+    private String cleanJsonResponse(String response) {
+        if (response == null) return "{}";
+        String cleaned = response.trim();
+        if (cleaned.startsWith("```json")) {
+            cleaned = cleaned.substring(7);
+        } else if (cleaned.startsWith("```")) {
+            cleaned = cleaned.substring(3);
+        }
+        if (cleaned.endsWith("```")) {
+            cleaned = cleaned.substring(0, cleaned.length() - 3);
+        }
+        return cleaned.trim();
     }
 }

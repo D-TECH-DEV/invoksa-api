@@ -89,23 +89,31 @@ public class AuthService {
     }
 
     public Map<String, Object> login(LoginRequest request) {
-        // Authentification utilisant exclusivement l'e-mail
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        log.info("Tentative de connexion pour l'email: {}", request.getEmail());
+        
+        try {
+            // Authentification utilisant exclusivement l'e-mail
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        // Dans CustomUserDetailsService, nous avons mis l'email comme "username" dans UserDetails
-        User userEntity = userRepository.findByEmail(userDetails.getUsername());
+            log.info("Authentification réussie pour: {}", request.getEmail());
 
-        Map<String, Object> authData = new HashMap<>();
-        authData.put("token", jwtUtils.generateJwtToken(userDetails));
-        authData.put("user", userMapper.toResponse(userEntity));
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            User userEntity = userRepository.findByEmail(userDetails.getUsername());
 
-        return authData;
+            Map<String, Object> authData = new HashMap<>();
+            authData.put("token", jwtUtils.generateJwtToken(userDetails));
+            authData.put("user", userMapper.toResponse(userEntity));
+
+            return authData;
+        } catch (Exception e) {
+            log.error("Échec de l'authentification pour {}: {}", request.getEmail(), e.getMessage());
+            throw e;
+        }
     }
 
     @Transactional

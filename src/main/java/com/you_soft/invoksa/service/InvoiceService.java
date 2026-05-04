@@ -1,6 +1,7 @@
 package com.you_soft.invoksa.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.you_soft.invoksa.config.JwtUtils;
 import com.you_soft.invoksa.dto.request.InvoiceRequest;
 import com.you_soft.invoksa.dto.response.InvoiceResponse;
@@ -8,6 +9,7 @@ import com.you_soft.invoksa.entity.Client;
 import com.you_soft.invoksa.entity.Invoice;
 import com.you_soft.invoksa.entity.InvoiceItem;
 import com.you_soft.invoksa.entity.User;
+import com.you_soft.invoksa.exception.ResourceNotFoundException;
 import com.you_soft.invoksa.mapper.InvoiceItemMapper;
 import com.you_soft.invoksa.mapper.InvoiceMapper;
 import com.you_soft.invoksa.repository.ClientRepository;
@@ -15,8 +17,8 @@ import com.you_soft.invoksa.repository.InvoiceRepository;
 import com.you_soft.invoksa.utils.AiUtil;
 import com.you_soft.invoksa.utils.MatriculeUtils;
 import com.you_soft.invoksa.utils.PdfUtil;
-import com.you_soft.invoksa.exception.ResourceNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class InvoiceService {
@@ -180,21 +182,40 @@ public class InvoiceService {
         }
 
         public Invoice getByToken(String token) {
-        Invoice invoice = invoiceRepository.findByToken(token);
-        if (invoice == null) {
-            throw new ResourceNotFoundException("Facture non trouvée avec ce token");
+                Invoice invoice = invoiceRepository.findByToken(token);
+                if (invoice == null) {
+                    throw new ResourceNotFoundException("Facture non trouvée avec ce token");
+                }
+                return invoice;
         }
-        return invoice;
-    }
 
-    public InvoiceResponse invoiceAi(String description, String lang, String devise) {
+        public InvoiceResponse invoiceAi(String description, String lang, String devise) {
                 try {
+                        log.info("Appel IA avec description: {}", description);
                         String jsonInvoice = aiUtil.getInvoiceFromAi(description, lang, devise);
+                        log.info("Réponse brute IA: {}", jsonInvoice);
+                        
                         ObjectMapper objectMapper = new ObjectMapper();
+                        objectMapper.registerModule(new JavaTimeModule());
+                        
                         Invoice invoice = objectMapper.readValue(jsonInvoice, Invoice.class);
+                        
+                        // Sécurité: Si l'IA n'a pas calculé le total ou les totaux par item
+                        if (invoice.getItems() != null) {
+                            invoice.getItems().forEach(item -> {
+                                if (item.getTotal() == null || item.getTotal() == 0) {
+                                    item.setTotal(item.getPrice() * item.getQuantity());
+                                }
+                            });
+                            if (invoice.getTotal() == null || invoice.getTotal() == 0) {
+                                invoice.setTotal(invoice.getItems().stream().mapToDouble(InvoiceItem::getTotal).sum());
+                            }
+                        }
+                        
                         return invoiceMapper.toResponse(invoice);
                 } catch (Exception e) {
-                        throw new RuntimeException("Erreur génération facture IA : " + e.getMessage());
+                        log.error("Erreur lors de la génération IA: {}", e.getMessage());
+                        throw new RuntimeException("Désolé, l'IA n'a pas pu structurer la facture. Vérifiez votre description. " + e.getMessage());
                 }
         }
 }
