@@ -66,8 +66,6 @@ public class AuthService {
         
         log.info("Utilisateur et Token enregistrés en {}ms. Préparation de la réponse.", (System.currentTimeMillis() - startTime));
 
-        // SOLUTION RADICALE: On lance l'envoi d'e-mail dans un thread totalement indépendant
-        // pour ne pas bloquer le thread de la requête HTTP.
         final String userEmail = savedUser.getEmail();
         final String verificationUrl = baseUrl + "/api/auth/verify?token=" + tokenEmailCheck;
 
@@ -91,20 +89,17 @@ public class AuthService {
     }
 
     public Map<String, Object> login(LoginRequest request) {
-        String identifier = request.getUsername();
-        if (identifier == null || identifier.isEmpty()) {
-            identifier = request.getEmail();
-        }
-
+        // Authentification utilisant exclusivement l'e-mail
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        identifier,
+                        request.getEmail(),
                         request.getPassword()
                 )
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User userEntity = userRepository.findByUsername(userDetails.getUsername());
+        // Dans CustomUserDetailsService, nous avons mis l'email comme "username" dans UserDetails
+        User userEntity = userRepository.findByEmail(userDetails.getUsername());
 
         Map<String, Object> authData = new HashMap<>();
         authData.put("token", jwtUtils.generateJwtToken(userDetails));
