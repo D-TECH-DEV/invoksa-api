@@ -22,10 +22,11 @@ spring:
 
   ai:
     google:
-      api-key: ${GEMINI_API_KEY}
-      chat:
-        options:
-          model: gemini-1.5-flash
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: gemini-1.5-flash
 
   mail:
     host: smtp.gmail.com
