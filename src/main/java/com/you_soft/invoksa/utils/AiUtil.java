@@ -54,21 +54,19 @@ JSON STRUCTURE:
                         .content()
         );
 
-        // Nettoyage au cas où l'IA inclurait des balises markdown ```json
-        return cleanJsonResponse(response);
+        return extractJson(response);
     }
 
-    private String cleanJsonResponse(String response) {
+    private String extractJson(String response) {
         if (response == null) return "{}";
-        String cleaned = response.trim();
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.substring(7);
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.substring(3);
+        
+        int firstBrace = response.indexOf('{');
+        int lastBrace = response.lastIndexOf('}');
+        
+        if (firstBrace >= 0 && lastBrace >= 0 && lastBrace > firstBrace) {
+            return response.substring(firstBrace, lastBrace + 1);
         }
-        if (cleaned.endsWith("```")) {
-            cleaned = cleaned.substring(0, cleaned.length() - 3);
-        }
-        return cleaned.trim();
+        
+        return response.trim();
     }
 }
