@@ -1,22 +1,21 @@
 package com.you_soft.invoksa.service;
 
-import org.springframework.ai.chat.client.ChatClient;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class AiService {
-    private final ChatClient chatClient;
 
-    public AiService(ChatClient chatClient) {
-        this.chatClient = chatClient;
+    private final Client client;
+
+    public AiService() {
+        this.client = new Client();
     }
 
     public String getInvoiceFromAi(String description, String lang) {
 
-        var prompt = """
+        String prompt = """
 You are an invoice generator.
 
 Generate a structured invoice in JSON format only.
@@ -40,33 +39,16 @@ Rules:
   - user: null if not specified
   - status: "PENDING"
 
-Output format MUST be strictly JSON like this:
-
-{
-  "client": { "id": null },
-  "user": { "id": null },
-  "total": 0,
-  "status": "PENDING",
-  "items": [
-    {
-      "description": "",
-      "quantity": 1,
-      "price": 0,
-      "total": 0
-    }
-  ]
-}
-
-Do not add explanations, markdown, or text outside JSON.
+Output MUST be JSON only.
 """.formatted(lang, description);
 
-        var completion = Objects.requireNonNull(
-                chatClient.prompt()
-                        .user(prompt)
-                        .call()
-                        .content()
-        );
+        GenerateContentResponse response =
+                client.models.generateContent(
+                        "gemini-1.5-flash",
+                        prompt,
+                        null
+                );
 
-        return completion;
+        return response.text();
     }
 }
