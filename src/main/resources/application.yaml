@@ -21,12 +21,11 @@ spring:
       write-dates-as-timestamps: false
 
   ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    google:
+      api-key: ${GEMINI_API_KEY}
       chat:
         options:
-          model: ${OPENAI_MODEL:gpt-4o}
+          model: gemini-1.5-flash
 
   mail:
     host: smtp.gmail.com
@@ -57,4 +56,3 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
   oauth2:
     redirect-uri: ${APP_FRONTEND_URL:http://localhost:3000}/api/oauth2/redirect
-

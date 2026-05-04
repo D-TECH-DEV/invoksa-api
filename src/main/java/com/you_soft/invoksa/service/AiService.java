@@ -1,17 +1,14 @@
 package com.you_soft.invoksa.service;
 
-import com.google.genai.Client;
-import com.google.genai.types.GenerateContentResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AiService {
 
-    private final Client client;
-
-    public AiService() {
-        this.client = new Client();
-    }
+    private final ChatModel chatModel;
 
     public String getInvoiceFromAi(String description, String lang) {
 
@@ -42,13 +39,20 @@ Rules:
 Output MUST be JSON only.
 """.formatted(lang, description);
 
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-1.5-flash",
-                        prompt,
-                        null
-                );
+        String response = chatModel.call(prompt);
+        return extractJson(response);
+    }
 
-        return response.text();
+    private String extractJson(String response) {
+        if (response == null) return "{}";
+
+        int firstBrace = response.indexOf('{');
+        int lastBrace = response.lastIndexOf('}');
+
+        if (firstBrace >= 0 && lastBrace >= 0 && lastBrace > firstBrace) {
+            return response.substring(firstBrace, lastBrace + 1);
+        }
+
+        return response.trim();
     }
 }
