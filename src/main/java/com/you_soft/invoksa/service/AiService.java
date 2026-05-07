@@ -13,32 +13,48 @@ public class AiService {
     public String getInvoiceFromAi(String description, String lang) {
 
         String prompt = """
-You are an invoice generator.
+    CONTEXTE : Tu es le moteur intelligent d'Invoksa, une application de facturation pour prestataires.
+    MISSION : Convertis la description de l'utilisateur en une facture structurée.
 
-Generate a structured invoice in JSON format only.
+    ### DONNÉES D'ENTRÉE
+    - Langue cible : %s
+    - Texte utilisateur : %s
 
-Language: %s
-User description: %s
+    ### STRUCTURE JSON ATTENDUE
+    {
+      "client": { "nom": "string", "adresse": "string (si présent)" },
+      "prestataire": { "nom": "string", "type_service": "string" },
+      "items": [
+        {
+          "description": "Libellé précis du service",
+          "quantité": nombre (ex: heures, jours, unités),
+          "unité": "h", "j", ou "unité",
+          "prix_unitaire": nombre,
+          "total_ligne": nombre
+        }
+      ],
+      "metriques": {
+        "sous_total": nombre,
+        "tva_applicable": boolean,
+        "taux_tva": 18,
+        "montant_tva": nombre,
+        "total_ttc": nombre
+      },
+      "statut": "PENDING"
+    }
 
-Rules:
-- Analyze the user description and generate invoice items logically.
-- Create between 1 and 5 invoice items.
-- Each item must contain:
-  - description
-  - quantity (integer >=1)
-  - price (number)
-  - total = quantity * price
+    ### RÈGLES MÉTIER (STRICTES)
+    1. ANALYSE : Si l'utilisateur dit "J'ai travaillé 3 jours à 150k", crée une ligne avec quantité: 3, unité: 'j', prix: 150000.
+    2. PROFESSIONNALISME : Reformule les descriptions pour qu'elles soient pro (ex: "codage site" -> "Développement de fonctionnalités web").
+    3. CALCULS : 
+       - total_ligne = quantité * prix_unitaire
+       - sous_total = somme des total_ligne
+       - montant_tva = sous_total * 0.18 (par défaut pour la zone OHADA/CI, sauf si précisé autrement)
+       - total_ttc = sous_total + montant_tva
+    4. FORMAT : Réponds exclusivement en JSON. Pas de texte avant ou après.
 
-- Compute the global invoice total.
-
-- Default values:
-  - client: null if not specified
-  - user: null if not specified
-  - status: "PENDING"
-
-Output MUST be JSON only.
-""".formatted(lang, description);
-
+    RÉSULTAT (JSON UNIQUEMENT) :
+    """.formatted(lang, description);
         String response = chatModel.call(prompt);
         return extractJson(response);
     }
