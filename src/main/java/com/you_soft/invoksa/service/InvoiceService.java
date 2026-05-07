@@ -48,7 +48,7 @@ public class InvoiceService {
 
                 Invoice invoice = Invoice.builder()
                                 .client(client)
-                                .status(invoiceRequest.getStatus())
+                                .status(invoiceRequest.getStatus() != 0 ? invoiceRequest.getStatus() : 500)
                                 .build();
 
                 List<InvoiceItem> items = invoiceRequest.getItems()
@@ -65,7 +65,7 @@ public class InvoiceService {
                 invoice.setTotal(total);
                 invoice.setNumber(matriculeUtils.generate(client));
 
-                return invoiceMapper.toResponse(invoiceRepository.save(invoice));
+                return invoiceMapper.toResponse(invoiceRepository.saveAndFlush(invoice));
         }
 
         public List<InvoiceResponse> getAll() {

@@ -23,6 +23,10 @@ Language: %s
 Currency: %s
 User description: %s
 
+IMPORTANT: Return ONLY the raw JSON object. 
+DO NOT include markdown code blocks (```json ... ```).
+DO NOT include any preamble or explanation.
+
 RULES:
 1. Extract or infer invoice items (description, quantity, price).
 2. Generate between 1 and 10 items.
@@ -30,7 +34,6 @@ RULES:
 4. If price is not mentioned, use 0.
 5. Calculate 'total' for each item: quantity * price.
 6. Calculate the global 'total' for the invoice.
-7. Return ONLY the JSON object. No preamble, no markdown code blocks, no explanation.
 
 JSON STRUCTURE:
 {
@@ -47,14 +50,21 @@ JSON STRUCTURE:
 }
 """.formatted(lang, devise, description);
 
-        String response = Objects.requireNonNull(
-                chatClient.prompt()
-                        .user(prompt)
-                        .call()
-                        .content()
-        );
+        try {
+            var responseContent = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
 
-        return extractJson(response);
+            if (responseContent == null || responseContent.isBlank()) {
+                throw new RuntimeException("L'IA a renvoyé une réponse vide.");
+            }
+
+            return extractJson(responseContent);
+        } catch (Exception e) {
+            // Log details might be handled by the caller or specialized logger
+            throw new RuntimeException("Erreur de communication avec l'IA : " + e.getMessage(), e);
+        }
     }
 
     private String extractJson(String response) {

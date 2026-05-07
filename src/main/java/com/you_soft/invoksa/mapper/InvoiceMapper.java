@@ -52,7 +52,7 @@ public class InvoiceMapper {
                                 .id(invoiceRequest.getId())
                                 .client(client)
                                 .total(invoiceRequest.getTotal())
-                                .status(invoiceRequest.getStatus())
+                                .status(invoiceRequest.getStatus() != 0 ? invoiceRequest.getStatus() : 500)
                                 .items(items)
                                 .build();
 
