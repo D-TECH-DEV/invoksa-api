@@ -5,6 +5,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.you_soft.invoksa.config.JwtUtils;
 import com.you_soft.invoksa.dto.request.InvoiceRequest;
 import com.you_soft.invoksa.dto.response.InvoiceResponse;
+import com.you_soft.invoksa.dto.response.AiInvoiceResponse;
+import com.you_soft.invoksa.dto.response.InvoiceItemResponse;
 import com.you_soft.invoksa.entity.Client;
 import com.you_soft.invoksa.entity.Invoice;
 import com.you_soft.invoksa.entity.InvoiceItem;
@@ -194,25 +196,26 @@ public class InvoiceService {
                         log.info("Appel IA avec description: {}", description);
                         String jsonInvoice = aiUtil.getInvoiceFromAi(description, lang, devise);
                         log.info("Réponse brute IA: {}", jsonInvoice);
-                        
                         ObjectMapper objectMapper = new ObjectMapper();
                         objectMapper.registerModule(new JavaTimeModule());
+                        AiInvoiceResponse aiResponse = objectMapper.readValue(jsonInvoice, AiInvoiceResponse.class);
                         
-                        Invoice invoice = objectMapper.readValue(jsonInvoice, Invoice.class);
+                        InvoiceResponse response = new InvoiceResponse();
+                        response.setItems(aiResponse.getItems().stream().map(item -> 
+                            InvoiceItemResponse.builder()
+                                .description(item.getDescription())
+                                .quantity(item.getQuantity() != null ? item.getQuantity() : 1)
+                                .price(item.getPrice() != null ? item.getPrice() : 0.0)
+                                .total(item.getTotal() != null ? item.getTotal() : (item.getPrice() != null ? item.getPrice() : 0.0) * (item.getQuantity() != null ? item.getQuantity() : 1))
+                                .build()
+                        ).toList());
                         
-                        // Sécurité: Si l'IA n'a pas calculé le total ou les totaux par item
-                        if (invoice.getItems() != null) {
-                            invoice.getItems().forEach(item -> {
-                                if (item.getTotal() == null || item.getTotal() == 0) {
-                                    item.setTotal(item.getPrice() * item.getQuantity());
-                                }
-                            });
-                            if (invoice.getTotal() == null || invoice.getTotal() == 0) {
-                                invoice.setTotal(invoice.getItems().stream().mapToDouble(InvoiceItem::getTotal).sum());
-                            }
-                        }
+                        double total = aiResponse.getTotal() != null ? aiResponse.getTotal() : 
+                                      response.getItems().stream().mapToDouble(InvoiceItemResponse::getTotal).sum();
+                        response.setTotal(total);
+                        response.setStatus(aiResponse.getStatus() != null ? aiResponse.getStatus() : 500);
                         
-                        return invoiceMapper.toResponse(invoice);
+                        return response;
                 } catch (Exception e) {
                         log.error("Erreur lors de la génération IA: {}", e.getMessage());
                         throw new RuntimeException("Désolé, l'IA n'a pas pu structurer la facture. Vérifiez votre description. " + e.getMessage());
