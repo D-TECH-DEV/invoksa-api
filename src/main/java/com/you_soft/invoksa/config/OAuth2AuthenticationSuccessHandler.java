@@ -26,7 +26,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserRepository userRepository;
     private final CustomUerDetailsService customUerDetailsService;
 
-    @Value("${app.oauth2.redirect-uri:http://localhost:3000/api/oauth2/redirect}")
+    @Value("${app.oauth2.redirect-uri}")
     private String redirectUri;
 
     @Override
@@ -47,7 +47,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             userRepository.save(user);
         }
 
-        UserDetails userDetails = customUerDetailsService.loadUserByUsername(user.getUsername());
+        UserDetails userDetails = customUerDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtils.generateJwtToken(userDetails);
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)

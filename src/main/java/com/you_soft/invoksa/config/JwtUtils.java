@@ -38,7 +38,7 @@ public class JwtUtils {
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
             return null;
         }
-        return userRepository.findByUsername(authentication.getName());
+        return userRepository.findByEmail(authentication.getName());
     }
 
     public String generateJwtToken(UserDetails userDetails) {
