@@ -51,10 +51,16 @@ JSON STRUCTURE:
 """.formatted(lang, devise, description);
 
         try {
-            var responseContent = chatClient.prompt()
+            var response = chatClient.prompt()
                     .user(prompt)
                     .call()
-                    .content();
+                    .chatResponse();
+
+            if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+                throw new RuntimeException("L'IA n'a retourné aucun résultat (ChatResponse empty).");
+            }
+
+            var responseContent = response.getResult().getOutput().getContent();
 
             if (responseContent == null || responseContent.isBlank()) {
                 throw new RuntimeException("L'IA a renvoyé une réponse vide.");
@@ -62,8 +68,9 @@ JSON STRUCTURE:
 
             return extractJson(responseContent);
         } catch (Exception e) {
-            // Log details might be handled by the caller or specialized logger
-            throw new RuntimeException("Erreur de communication avec l'IA : " + e.getMessage(), e);
+            // Inclure le type d'exception pour plus de clarté
+            String detail = (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+            throw new RuntimeException("Erreur lors de l'appel à l'IA (" + e.getClass().getSimpleName() + "): " + detail, e);
         }
     }
 
